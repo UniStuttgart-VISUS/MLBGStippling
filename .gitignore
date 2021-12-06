@@ -1,0 +1,10 @@
+/.vscode
+/build
+/debug
+/data
+/unmixer/__pycache__
+
+CMakeLists.txt.user
+*.log
+*.bak
+*.zip

@@ -1,0 +1,46 @@
+{
+    "common": {
+        "borderWidth": 0,
+        "lbg": {
+            "errorReductionChance": 0,
+            "forcedCooldown": false,
+            "hysteresisFunction": "Linear",
+            "hysteresisMax": 1,
+            "hysteresisStart": 0.009999999776482582,
+            "maxIterations": 50,
+            "splitJitterSpread": 0,
+            "stippleModel": "Difference"
+        },
+        "stippleAlgorithm": "CoupledLBG",
+        "voronoiAlgorithm": "JumpFlooding",
+        "voronoiScale": 2
+    },
+    "layers": [
+        {
+            "imagePath": "layers/layer-0_000000.png",
+            "initialStipples": 100,
+            "lbg": {
+                "color": "#000000",
+                "shape": "Circle",
+                "shapeParameter": 1.5,
+                "shapeRadius": 0.25,
+                "sizeFunction": "Linear",
+                "sizeMax": 4,
+                "sizeMin": 2
+            }
+        },
+        {
+            "imagePath": "layers/layer-1_ffffff.png",
+            "initialStipples": 100,
+            "lbg": {
+                "color": "#ffffff",
+                "shape": "Circle",
+                "shapeParameter": 1.5,
+                "shapeRadius": 0.25,
+                "sizeFunction": "Linear",
+                "sizeMax": 4,
+                "sizeMin": 2
+            }
+        }
+    ]
+}

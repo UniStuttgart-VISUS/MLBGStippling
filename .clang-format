@@ -1,0 +1,10 @@
+BasedOnStyle: WebKit
+BreakBeforeBraces: Attach
+IncludeCategories:
+  - Regex:    '.*'
+    Priority: 1
+  - Regex:    '^<.*'
+    Priority: 2
+  - Regex:    '^<.*\.h>'
+    Priority: 3
+SortIncludes: true
