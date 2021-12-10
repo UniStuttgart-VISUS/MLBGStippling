@@ -2,6 +2,7 @@
 #define LAYERTOY_H
 
 #include "layers.h"
+#include <tuple>
 
 inline QImage rasterizeImage(int width, int height, std::function<float(float, float)> fragmentCb) {
     QImage image(width, height, QImage::Format_Grayscale16);
@@ -102,10 +103,7 @@ inline Layers linearGradientLayer() {
     return { Layer(blackImage, "Black", Qt::black) };
 }
 
-inline Layers gaussianFoveaSamplingLayer() {
-    const QSize screenSizePx(1920, 1080);
-    const QSizeF screenSizeCm(53.35, 30.1);
-    const float viewDistanceCm = 60;
+inline std::tuple<Layers, float, float> gaussianFoveaSamplingLayer(QSize screenSizePx, QSizeF screenSizeCm, float viewDistanceCm) {
     const float foveaAlpha = 5.0 / 180.0 * M_PI;
     const float gaussFactor = 0.7;
     const float foveaCm = viewDistanceCm * std::sin(foveaAlpha);
@@ -131,7 +129,7 @@ inline Layers gaussianFoveaSamplingLayer() {
     layer.stippler.lbg.sizeMin = 1;
     layer.stippler.lbg.sizeMax = 1;
 
-    return { layer };
+    return std::make_tuple<Layers, float, float>({ layer }, foveaPx.width() * gaussFactor, foveaPx.height() * gaussFactor);
 }
 
 #endif

@@ -826,7 +826,91 @@ QWidget* ToolboxWidget::createButtonGroup() {
         options.voronoiScale = 1.0;
         m_stippler.setOptions(options);
         invalidateParameterWidgets();
-        emit importLayers(std::move(gaussianFoveaSamplingLayer()));
+
+#if 0
+        // VISUS powerwall.
+        QSize screenSizePx(10800, 4096);
+        QSizeF screenSizeCm(582.66f, 220.9792f);
+        float viewDistanceCm = 450.0f;
+#else
+        // Full HD monitor.
+        QSize screenSizePx(1920, 1080);
+        QSizeF screenSizeCm(53.35f, 30.1f);
+        float viewDistanceCm = 60.0f;
+#endif
+        bool generate = false;
+
+        QDialog* dialog = new QDialog(this);
+        QFormLayout* layout = new QFormLayout();
+        dialog->setWindowTitle("Set parameters");
+        dialog->setWindowFlags(dialog->windowFlags().setFlag(Qt::WindowContextHelpButtonHint, false));
+        dialog->setLayout(layout);
+
+        QSpinBox* screenWidthPxBox = new QSpinBox(dialog);
+        screenWidthPxBox->setRange(1, std::numeric_limits<short>::max());
+        screenWidthPxBox->setValue(screenSizePx.width());
+        connect(screenWidthPxBox, QOverload<int>::of(&QSpinBox::valueChanged),
+            [&](int value) {
+                screenSizePx.setWidth(value);
+            });
+
+        QSpinBox* screenHeightPxBox = new QSpinBox(dialog);
+        screenHeightPxBox->setRange(1, std::numeric_limits<short>::max());
+        screenHeightPxBox->setValue(screenSizePx.height());
+        connect(screenHeightPxBox, QOverload<int>::of(&QSpinBox::valueChanged),
+            [&](int value) {
+                screenSizePx.setHeight(value);
+            });
+
+        QDoubleSpinBox* screenWidthCmBox = new QDoubleSpinBox(dialog);
+        screenWidthCmBox->setRange(1.0, std::numeric_limits<short>::max());
+        screenWidthCmBox->setDecimals(3);
+        screenWidthCmBox->setValue(screenSizeCm.width());
+        connect(screenWidthCmBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            [&](double value) {
+                screenSizeCm.setWidth(value);
+            });
+
+        QDoubleSpinBox* screenHeightCmBox = new QDoubleSpinBox(dialog);
+        screenHeightCmBox->setRange(1.0, std::numeric_limits<short>::max());
+        screenHeightCmBox->setDecimals(3);
+        screenHeightCmBox->setValue(screenSizeCm.height());
+        connect(screenHeightCmBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            [&](double value) {
+                screenSizeCm.setHeight(value);
+            });
+
+        QDoubleSpinBox* viewDistanceCmBox = new QDoubleSpinBox(dialog);
+        viewDistanceCmBox->setRange(1.0, std::numeric_limits<short>::max());
+        viewDistanceCmBox->setDecimals(3);
+        viewDistanceCmBox->setValue(viewDistanceCm);
+        connect(viewDistanceCmBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            [&](double value) {
+                viewDistanceCm = static_cast<float>(value);
+            });
+
+        QPushButton* generateButton = new QPushButton("Generate", dialog);
+        connect(generateButton, &QPushButton::pressed, [&]() {
+            generate = true;
+            dialog->close();
+        });
+
+        layout->addRow("Screen width (px)", screenWidthPxBox);
+        layout->addRow("Screen height (px)", screenHeightPxBox);
+        layout->addRow("Screen width (cm)", screenWidthCmBox);
+        layout->addRow("Screen height (cm)", screenHeightCmBox);
+        layout->addRow("Viewing distance (cm)", viewDistanceCmBox);
+        layout->addWidget(generateButton);
+        dialog->exec();
+
+        if (generate) {
+            auto [layers, sigmaX, sigmaY] = gaussianFoveaSamplingLayer(screenSizePx, screenSizeCm, viewDistanceCm);
+            qInfo() << "Sigma (px)" << sigmaX << "," << sigmaY;
+            qInfo() << "Screen size (px)" << screenSizePx.width() << "," << screenSizePx.height();
+            qInfo() << "Screen size (cm)" << screenSizeCm.width() << "," << screenSizeCm.height();
+            qInfo() << "Viewing distance (cm)" << viewDistanceCm;
+            emit importLayers(std::move(layers));
+        }
     });
 
     QPushButton* loadProjectButton = new QPushButton("Load Project", this);
