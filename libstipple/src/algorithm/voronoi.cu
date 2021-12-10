@@ -190,7 +190,7 @@ __global__ void voronoiOuterReassignKernel(
 }
 
 __device__ int uniqueBucket(int* bucket0, int bucketSize, int index) {
-    for (int offset = 0; offset < bucketSize; ++offset) {
+    for (unsigned int offset = 0; offset < static_cast<unsigned int>(bucketSize); ++offset) {
         int old = atomicCAS(bucket0 + offset, -1, index);
         if (old == -1 || old == index) {
             // Successfully written or already found.
@@ -217,7 +217,8 @@ __global__ void voronoiIntersectNaturalNeighborsKernel(
     }
 
     const float SampleSize = 1.6f; // Size of stipple +60% to accomodate for unfavorably subpixel-placed stipples.
-    const int bucketIndex0 = y * bucketSize * mergedCellMaps.width() + x * bucketSize;
+    const size_t bucketIndex0 = static_cast<size_t>(y) * static_cast<size_t>(bucketSize) * static_cast<size_t>(mergedCellMaps.width()) + //
+        static_cast<size_t>(x) * static_cast<size_t>(bucketSize);
 
     // Intersect a kernel-sized block of neighbor pixels.
     for (int yy = max(y - kernelHeight, 0); yy < min(y + kernelHeight, static_cast<int>(mergedCellMaps.height())); ++yy) {
@@ -228,9 +229,9 @@ __global__ void voronoiIntersectNaturalNeighborsKernel(
                 const float distance = sdStipple(make_float2(xx, yy), stipples[cellIndex]);
                 if (nnDistance <= distance) {
                     // Update or insert bucket and increment weight (non-normalized).
-                    int bucketIndex = uniqueBucket(nnIndexMap + bucketIndex0, bucketSize, cellIndex);
-                    if (bucketIndex != -1) {
-                        atomicAdd(&nnWeightMap[bucketIndex0 + bucketIndex], 1.0f);
+                    int bucketOffset = uniqueBucket(&nnIndexMap[bucketIndex0], bucketSize, cellIndex);
+                    if (bucketOffset >= 0) {
+                        atomicAdd(&nnWeightMap[bucketIndex0 + static_cast<size_t>(bucketOffset)], 1.0f);
                     } else {
                         *error = 2;
                     }
@@ -426,7 +427,7 @@ bool voronoiIntersectNaturalNeighbors(
     const CellMaps& mergedCellMaps,
     const Stipples& stipples) {
 
-    const int bucketMapSize = bucketSize * mergedCellMaps.width() * mergedCellMaps.height();
+    const size_t bucketMapSize = bucketSize * static_cast<size_t>(mergedCellMaps.width()) * static_cast<size_t>(mergedCellMaps.height());
     thrust::device_vector<int> dNNIndexMap(bucketMapSize, -1);
     thrust::device_vector<float> dNNWeightMap(bucketMapSize, 0.0f);
 
@@ -459,23 +460,25 @@ bool voronoiIntersectNaturalNeighbors(
 
     nnIndexMap.width = bucketSize * mergedCellMaps.width();
     nnIndexMap.height = mergedCellMaps.height();
-    nnIndexMap.pixels.resize(nnIndexMap.width * nnIndexMap.height);
+    nnIndexMap.pixels.resize(bucketMapSize);
     thrust::copy(dNNIndexMap.begin(), dNNIndexMap.end(), nnIndexMap.pixels.begin());
 
     nnWeightMap.width = bucketSize * mergedCellMaps.width();
     nnWeightMap.height = mergedCellMaps.height();
-    nnWeightMap.pixels.resize(nnWeightMap.width * nnWeightMap.height);
+    nnWeightMap.pixels.resize(bucketMapSize);
     thrust::copy(dNNWeightMap.begin(), dNNWeightMap.end(), nnWeightMap.pixels.begin());
 
     // Normalize weights.
     for (int y = 0; y < mergedCellMaps.height(); ++y) {
         for (int x = 0; x < mergedCellMaps.width(); ++x) {
+            size_t index0 = static_cast<size_t>(y) * static_cast<size_t>(bucketSize) * static_cast<size_t>(mergedCellMaps.width()) + //
+                static_cast<size_t>(x) * static_cast<size_t>(bucketSize);
             double sum = 0.0;
-            for (int i = 0; i < bucketSize; ++i) {
-                sum += nnWeightMap.pixels[y * bucketSize * mergedCellMaps.width() + x * bucketSize + i];
+            for (size_t i = 0; i < bucketSize; ++i) {
+                sum += nnWeightMap.pixels[index0 + i];
             }
-            for (int i = 0; i < bucketSize; ++i) {
-                nnWeightMap.pixels[y * bucketSize * mergedCellMaps.width() + x * bucketSize + i] /= sum;
+            for (size_t i = 0; i < bucketSize; ++i) {
+                nnWeightMap.pixels[index0 + i] /= sum;
             }
         }
     }
