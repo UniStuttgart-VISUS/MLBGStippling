@@ -17,7 +17,21 @@ This is a cleaned-up version of the GPU-based code that was used to generate the
 ## Citation
 
 ```bibtex
-TODO
+@article{Schulz2021MultiClass,
+    abstract = {We introduce inverted stippling, a method to mimic an inversion technique used by artists when performing stippling. To this end, we extend Linde-Buzo-Gray (LBG) stippling to multi-class LBG (MLBG) stippling with multiple layers. MLBG stippling couples the layers stochastically to optimize for per-layer and overall blue-noise properties. We propose a stipple-based filling method to generate solid color backgrounds for inverting areas. Our experiments demonstrate the effectiveness of MLBG in terms of reducing overlapping and intensity accuracy. In addition, we showcase MLBG with color stippling and dynamic multi-class blue-noise sampling, which is possible due to its support for temporal coherence.},
+    author = {Schulz, Christoph and Kwan, Kin Chung and Becher, Michael and Baumgartner, Daniel and Reina, Guido and Deussen, Oliver and Weiskopf, Daniel},
+    title = {Multi-Class Inverted Stippling},
+    year = {2021},
+    month = {dec},
+    volume = {40},
+    number = {6},
+    issn = {0730-0301},
+    doi = {10.1145/3478513.3480534},
+    journal = {ACM Trans. Graph.},
+    articleno = {245},
+    numpages = {12},
+    keywords = {stippling, linde-buzo-gray-algorithm, voronoi diagram, negative space, sampling}
+}
 ```
 
 ## Building
