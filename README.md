@@ -30,7 +30,7 @@ This is a cleaned-up version of the GPU-based code that was used to generate the
     journal = {ACM Trans. Graph.},
     articleno = {245},
     numpages = {12},
-    keywords = {stippling, linde-buzo-gray-algorithm, voronoi diagram, negative space, sampling}
+    keywords = {stippling, linde-buzo-gray-algorithm, voronoi diagram, negative space, sampling, multi-class}
 }
 ```
 
