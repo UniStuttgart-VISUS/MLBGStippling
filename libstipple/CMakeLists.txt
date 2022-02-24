@@ -1,4 +1,4 @@
-project(libstipple LANGUAGES CXX CUDA)
+project(libstipple LANGUAGES CUDA CXX)
 
 # Test for CUDA version.
 if(${CMAKE_CUDA_COMPILER_VERSION} VERSION_LESS "11.0.0") 
@@ -25,6 +25,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CUDA_STANDARD 17
     CUDA_STANDARD_REQUIRED ON
     CUDA_EXTENSIONS OFF
+    CUDA_RUNTIME_LIBRARY STATIC
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
@@ -36,7 +37,13 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:DEBUG>>:-G --source-in-ptx>
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:RELWITHDEBINFO>>:-lineinfo --source-in-ptx>)
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC cuda cudadevrt cudart_static)
+    PUBLIC cuda cudadevrt cudart_static )
+
+if(UNIX AND NOT APPLE)
+    find_package(Threads REQUIRED)
+    target_link_libraries(${PROJECT_NAME}
+        PUBLIC Threads::Threads ${CMAKE_DL_LIBS} rt)
+endif()
 
 option(ENABLE_NVTOOLSEXT "Use NVIDIA Tools Extensions for profiling." ON)
 if(ENABLE_NVTOOLSEXT)
@@ -56,6 +63,7 @@ set_target_properties(${PROJECT_NAME}_test PROPERTIES
     CUDA_STANDARD 14
     CUDA_STANDARD_REQUIRED ON
     CUDA_EXTENSIONS OFF
+    CUDA_RUNTIME_LIBRARY STATIC
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)

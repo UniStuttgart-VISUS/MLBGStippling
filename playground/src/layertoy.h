@@ -112,7 +112,7 @@ inline std::tuple<Layers, float, float> gaussianFoveaSamplingLayer(QSize screenS
 
     auto ellipticalGauss2DAppox = [](float x, float y,
                                       float sigmaX, float sigmaY) -> float {
-        return std::expf(-((x * x) / (2.0 * sigmaX * sigmaX) + (y * y) / (2.0 * sigmaY * sigmaY)));
+        return std::exp(-((x * x) / (2.0 * sigmaX * sigmaX) + (y * y) / (2.0 * sigmaY * sigmaY)));
     };
 
     QImage gaussianImage(screenSizePx.width() * 2, screenSizePx.height() * 2, QImage::Format_Grayscale8);

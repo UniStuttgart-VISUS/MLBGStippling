@@ -7,7 +7,7 @@ template <typename T>
 struct Map {
     int width = 0;
     int height = 0;
-    std::vector<typename T> pixels;
+    std::vector<T> pixels;
 };
 
 #endif

@@ -6,7 +6,9 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt6 COMPONENTS Core Widgets Svg OpenGLWidgets QUIET)
 if(NOT Qt6_FOUND)
     find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
+    message(STATUS "Using Qt5 fallback ${Qt5Widgets_VERSION_STRING}")
 endif()
+
 
 # Locate sources.
 file(GLOB_RECURSE CXX_SOURCE_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "src/*.cpp")
@@ -19,10 +21,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt::Widgets
-    Qt::Svg
-	$<$<BOOL:${Qt6_FOUND}>:Qt6::OpenGLWidgets>
     libstipple)
+if(Qt6_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        Qt6::Widgets Qt6::Svg Qt6::OpenGLWidgets)
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        Qt5::Widgets Qt5::Svg)
+endif()
 
 # Source groups for Visual Studio.
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -49,7 +55,7 @@ if(WIN32)
             --no-opengl-sw
             --no-compiler-runtime
             --no-system-d3d-compiler
-			$<$<NOT:$<BOOL:${Qt6_FOUND}>>:--no-webkit2>
+            $<$<NOT:$<BOOL:${Qt6_FOUND}>>:--no-webkit2>
             $<$<NOT:$<VERSION_LESS:${Qt5Core_VERSION},"5.13.0">>:--no-virtualkeyboard>
             --no-quick-import
             --no-translations
