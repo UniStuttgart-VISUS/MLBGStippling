@@ -1,5 +1,7 @@
 /.vscode
+/.vs
 /build
+/out
 /debug
 /data
 /unmixer/__pycache__

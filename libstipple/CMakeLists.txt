@@ -37,7 +37,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:DEBUG>>:-G --source-in-ptx>
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:RELWITHDEBINFO>>:-lineinfo --source-in-ptx>)
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC cuda cudadevrt cudart_static )
+    PUBLIC cuda cudadevrt cudart_static)
 
 if(UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
@@ -67,6 +67,8 @@ set_target_properties(${PROJECT_NAME}_test PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
+target_include_directories(${PROJECT_NAME}_test
+    PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 target_link_libraries(${PROJECT_NAME}_test PRIVATE
     libstipple)
 

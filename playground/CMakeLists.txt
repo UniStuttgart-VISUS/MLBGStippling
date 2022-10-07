@@ -1,4 +1,4 @@
-project(playground LANGUAGES CXX)
+project(playground LANGUAGES CXX CUDA)
 
 # Add Qt.
 set(CMAKE_AUTOMOC ON)
