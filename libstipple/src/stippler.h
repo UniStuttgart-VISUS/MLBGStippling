@@ -66,7 +66,7 @@ public:
     Stippler(const Stippler&) = delete;
     Stippler& operator=(const Stippler&) = delete;
 
-    void resetLayers(const std::vector<StipplerLayer>& layers);
+    void resetLayers(const std::vector<StipplerLayer>& layers, bool keepState = false);
 
     const StipplerOptions& options() const;
     void setOptions(const StipplerOptions& options);

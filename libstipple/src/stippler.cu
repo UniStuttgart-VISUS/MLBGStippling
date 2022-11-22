@@ -19,7 +19,7 @@ public:
         , m_coupledCellMaps(m_densityMaps.layers(), m_densityMaps.width(), m_densityMaps.height())
         , m_lbg(makeLindeBuzoGray(layers, options)) { }
 
-    DensityMaps makeDensityMaps(const std::vector<StipplerLayer>& layers, const StipplerOptions& options) {
+    static DensityMaps makeDensityMaps(const std::vector<StipplerLayer>& layers, const StipplerOptions& options) {
         assert((layers[0].density.width > 0 && layers[0].density.height > 0) && "Image size must be greater than zero");
         DensityMaps maps(layers.size(), layers[0].density.width, layers[0].density.height);
         maps.copyToDevice(layers.begin(), layers.end(), [](const auto& layer) { return layer.density.pixels.data(); });
@@ -74,12 +74,19 @@ public:
         return std::move(lbg);
     }
 
+    void updateDensityMaps(
+        const StipplerOptions& options,
+        const std::vector<StipplerLayer>& layers) {
+        // TODO: assert if layer size or options do not match.
+        m_densityMaps = makeDensityMaps(layers, options);
+    }
+
     std::vector<std::vector<Stipple>> stipple(StippleAlgorithm stippleAlgorithm, VoronoiAlgorithm voronoiAlgorithm, Stippler::IterationCallback cb) {
         LindeBuzoGrayResult result;
         do {
             if (m_stipples.empty()) {
-                //printf("Recovering...\n");
-                // Zero stipples usually occur because of poor parameters or optimization - attempt a blunt recovery.
+                // printf("Recovering...\n");
+                //  Zero stipples usually occur because of poor parameters or optimization - attempt a blunt recovery.
                 std::mt19937 gen;
                 std::uniform_real_distribution<float> centerXDis(m_densityMaps.width() / 4, (m_densityMaps.width() * 3) / 4);
                 std::uniform_real_distribution<float> centerYDis(m_densityMaps.height() / 4, (m_densityMaps.height() * 3) / 4);
@@ -149,7 +156,7 @@ public:
             ::voronoi(m_cellMaps, m_stipples, voronoiAlgorithm);
             ::voronoiMerge(m_coupledCellMaps, m_cellMaps, m_stipples);
 
-            //TODO: morton/z-curve-based reordering.
+            // TODO: morton/z-curve-based reordering.
 
             // Compute intersection with the original cell map.
             bool ok = voronoiIntersectNaturalNeighbors(naturalNeighborData.indexMap, naturalNeighborData.weightMap,
@@ -191,9 +198,13 @@ Stippler::Stippler()
 
 Stippler::~Stippler() = default;
 
-void Stippler::resetLayers(const std::vector<StipplerLayer>& layers) {
-    p = std::make_unique<StipplerPrivate>(m_options, layers);
-    m_stippledOnce = false;
+void Stippler::resetLayers(const std::vector<StipplerLayer>& layers, bool keepState) {
+    if (!keepState || !m_stippledOnce) {
+        p = std::make_unique<StipplerPrivate>(m_options, layers);
+        m_stippledOnce = false;
+    } else {
+        p->updateDensityMaps(m_options, layers);
+    }
 }
 
 const StipplerOptions& Stippler::options() const {

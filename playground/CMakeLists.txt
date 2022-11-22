@@ -3,12 +3,13 @@ project(playground LANGUAGES CXX CUDA)
 # Add Qt.
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-find_package(Qt6 COMPONENTS Core Widgets Svg OpenGLWidgets QUIET)
+find_package(Qt6 QUIET COMPONENTS Core Widgets Svg OpenGLWidgets OPTIONAL_COMPONENTS Multimedia)
 if(NOT Qt6_FOUND)
     find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
     message(STATUS "Using Qt5 fallback ${Qt5Widgets_VERSION_STRING}")
+elseif(TARGET Qt6::Multimedia)
+    message(STATUS "Using Qt6 multimedia")
 endif()
-
 
 # Locate sources.
 file(GLOB_RECURSE CXX_SOURCE_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "src/*.cpp")
@@ -24,7 +25,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     libstipple)
 if(Qt6_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        Qt6::Widgets Qt6::Svg Qt6::OpenGLWidgets)
+        Qt6::Widgets Qt6::Svg Qt6::OpenGLWidgets $<$<TARGET_EXISTS:Qt6::Multimedia>:Qt6::Multimedia>)
 else()
     target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt5::Widgets Qt5::Svg)

@@ -3,6 +3,10 @@
 #include "layertoy.h"
 #include <QtWidgets>
 
+#if defined(QT_MULTIMEDIA_LIB)
+#include <QtMultimedia>
+#endif
+
 class ExpandableWidgetHeader : public QFrame {
 public:
     const QSize iconSize = { 14, 14 };
@@ -778,6 +782,17 @@ QWidget* ToolboxWidget::createButtonGroup() {
     QAction* importInvertedGradientAction = importToyMenu->addAction("Inverted Gradient");
     QAction* importLinearGradientAction = importToyMenu->addAction("Linear Gradient");
     QAction* importGaussianFoveaSamplingAction = importToyMenu->addAction("Gaussian Fovea Sampling");
+#if defined(QT_MULTIMEDIA_LIB)
+    QMenu* cameraMenu = importMenu->addMenu("Camera");
+    for (const auto& cameraDevice : QMediaDevices::videoInputs()) {
+        QAction* cameraAction = cameraMenu->addAction(cameraDevice.description());
+        cameraAction->setData(QVariant::fromValue(cameraDevice));
+        connect(cameraAction, QOverload<bool>::of(&QAction::triggered), [this, cameraAction]() {
+            const auto& cameraDevice = cameraAction->data().value<QCameraDevice>();
+            emit importCamera(new QCamera(cameraDevice));
+        });
+    }
+#endif
     importButton->setMenu(importMenu);
     connect(importAsDensityAction, QOverload<bool>::of(&QAction::triggered), [this, settingsPath, getOpenImageNames]() {
         settingsPath(QLatin1String("image_dir"), [&](auto defaultPath) {

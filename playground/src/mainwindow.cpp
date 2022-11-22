@@ -6,6 +6,10 @@
 #include <QtWidgets>
 #include <array>
 
+#if defined(QT_MULTIMEDIA_LIB)
+#include <QtMultimedia>
+#endif
+
 std::vector<StipplerLayer> toStipplerLayers(const Layers& layers) {
     std::vector<StipplerLayer> stipplerLayers;
     for (const auto& layer : layers) {
@@ -39,6 +43,9 @@ MainWindow::MainWindow(Layers layers, QWidget* parent)
     });
     connect(m_toolbox, &ToolboxWidget::importAsDensity, this, &MainWindow::loadImages);
     connect(m_toolbox, &ToolboxWidget::importAsDual, this, &MainWindow::loadImageAsDual);
+#if defined(QT_MULTIMEDIA_LIB)
+    connect(m_toolbox, &ToolboxWidget::importCamera, this, &MainWindow::loadCamera);
+#endif
     connect(m_toolbox, &ToolboxWidget::importLayers, this, &MainWindow::loadLayers);
     connect(m_toolbox, &ToolboxWidget::exportImage, this, &MainWindow::saveImage);
     connect(m_toolbox, &ToolboxWidget::exportNaturalNeighborData, this, &MainWindow::computeAndSaveNaturalNeighborData);
@@ -158,7 +165,7 @@ void MainWindow::setIntermediateResultDisplay(int minIterationDuration) {
             for (int layerIndex = 0; layerIndex < m_layers.size(); layerIndex++) {
                 m_layers[layerIndex].stipples = layerStipples[layerIndex];
             }
-            if (!lindeBuzoGrayResult.done) {
+            if (!lindeBuzoGrayResult.done || m_frameChanging) {
                 m_toolbox->setRenderMode(RenderMode::RasterStipples);
             } else {
                 m_toolbox->setRenderMode(RenderMode::RasterStipplesWithBackground);
@@ -257,6 +264,63 @@ void MainWindow::loadLayers(Layers layers) {
     setLayers(std::move(layers));
 }
 
+#if defined(QT_MULTIMEDIA_LIB)
+void MainWindow::loadCamera(QCamera* camera) {
+    // TODO: delete old camera/worker/etc.
+
+    QThread* thread = new QThread();
+    FrameWorker* frameWorker = new FrameWorker(m_frameChanging);
+    connect(this, &MainWindow::cameraFrameChanged, frameWorker, &FrameWorker::processVideoFrame);
+    connect(frameWorker, &FrameWorker::mapsChanged, this, &MainWindow::loadCameraMaps);
+    frameWorker->moveToThread(thread);
+    thread->start();
+
+    QMediaCaptureSession* captureSession = new QMediaCaptureSession();
+    QVideoSink* videoSink = new QVideoSink();
+    connect(videoSink, QOverload<const QVideoFrame&>::of(&QVideoSink::videoFrameChanged), [this, frameWorker](const QVideoFrame& frame) {
+        if (!frame.isValid()) {
+            return;
+        }
+        if (frameWorker->isReady()) {
+            emit cameraFrameChanged(frame);
+        }
+    });
+    captureSession->setVideoSink(videoSink);
+    captureSession->setCamera(camera);
+
+    // m_toolbox->setmax(RenderMode::PainterHighlightedStipples);
+    m_layers[0].image = QImage(videoSink->videoSize() / 2, QImage::Format_ARGB32); // XXX: another hack.
+    m_toolbox->setRenderMode(RenderMode::PainterHighlightedStipples);
+    m_toolbox->setMinIterationDuration(15);
+    m_toolbox->setEditable(false);
+    auto docks = findChildren<QDockWidget*>();
+    for (auto* dock : docks) {
+        dock->hide();
+    } 
+    QCoreApplication::processEvents();
+
+    camera->start();
+}
+
+void MainWindow::loadCameraMaps(std::vector<Map<float>> maps) {
+    if (m_frameChanging) {
+        return;
+    }
+    m_frameChanging = true;
+
+    //qDebug() << "loadCameraMaps";
+
+    auto stipplerLayers = toStipplerLayers(m_layers);
+    for (int i = 0; i < stipplerLayers.size(); ++i) {
+        stipplerLayers[i].density = maps[i];
+    }
+    m_stippler.resetLayers(stipplerLayers, true);
+    m_stippler.stipple();
+
+    m_frameChanging = false;
+}
+#endif
+
 void MainWindow::loadProject(const QString& path) {
     QFile jsonFile(path);
     jsonFile.open(QFile::ReadOnly);
@@ -311,7 +375,7 @@ qint64 MainWindow::stipple() {
 void MainWindow::computeAndSaveNaturalNeighborData() {
     qInfo() << "Computing natural neighbor maps...";
 
-    //TODO: evil constants.
+    // TODO: evil constants.
     const size_t BucketSize = 16;
     const int KernelSize = 128;
 
@@ -398,3 +462,60 @@ void MainWindow::updateImageViewer() {
         }
     }
 }
+
+#if defined(QT_MULTIMEDIA_LIB)
+FrameWorker::FrameWorker(bool& frameChanging, QObject* parent)
+    : QObject(parent)
+    , m_ready(true)
+    , m_frameChanging(frameChanging) {
+}
+
+void FrameWorker::processVideoFrame(const QVideoFrame& frame) {
+    if (!m_ready) {
+        return;
+    }
+    m_ready = false;
+    //qDebug() << "processVideoFrame";
+
+    QImage image = frame.toImage().convertToFormat(QImage::Format_Grayscale8);
+    image = image.scaled(image.size() / 2);
+
+    std::vector<float> pixelsBlack;
+    std::vector<float> pixelsWhite;
+    pixelsBlack.reserve(image.width() * image.height());
+    pixelsWhite.reserve(image.width() * image.height());
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            QRgb pixel = image.pixel(x, y);
+            float density = (1.0f - qGray(pixel) / 255.0f) * qAlpha(pixel) / 255.0f;
+            density = std::max(0.0f, std::min(1.0f, density));
+            pixelsBlack.push_back(density);
+            pixelsWhite.push_back(1.0f - density);
+        }
+    }
+
+    std::vector<Map<float>> maps = {
+        Map<float> {
+            image.width(),
+            image.height(),
+            std::move(pixelsBlack) },
+        Map<float> {
+            image.width(),
+            image.height(),
+            std::move(pixelsWhite) }
+    };
+
+    emit mapsChanged(std::move(maps));
+
+    // XXX: busy waiting... could be better.
+    while (m_frameChanging) {
+        QThread::msleep(1);
+    }
+
+    // Once finished wait a bit.
+    // QThread::msleep(2000);
+
+    m_ready = true;
+}
+
+#endif

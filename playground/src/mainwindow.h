@@ -30,6 +30,10 @@ public slots:
     void loadImages(const QStringList& paths);
     void loadImageAsDual(const QString& path);
     void loadLayers(Layers layers);
+#if defined(QT_MULTIMEDIA_LIB)
+    void loadCamera(QCamera* camera);
+    void loadCameraMaps(std::vector<Map<float>> maps);
+#endif
 
     void loadProject(const QString& path);
     void saveProject(const QString& path);
@@ -38,6 +42,11 @@ public slots:
     qint64 stipple();
 
     void computeAndSaveNaturalNeighborData();
+
+#if defined(QT_MULTIMEDIA_LIB)
+signals:
+    void cameraFrameChanged(const QVideoFrame& frame);
+#endif
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -49,10 +58,34 @@ private:
     Layers m_layers;
     Stippler m_stippler;
 
+#if defined(QT_MULTIMEDIA_LIB)
+    bool m_frameChanging = false;
+#endif
+
     QElapsedTimer m_stippleTimer;
     ImageViewer* m_imageViewer;
     ToolboxWidget* m_toolbox;
     QStatusBar* m_statusBar;
 };
+
+#if defined(QT_MULTIMEDIA_LIB)
+class FrameWorker : public QObject {
+    Q_OBJECT
+public:
+    FrameWorker(bool& frameChanging, QObject* parent = nullptr);
+
+    inline bool isReady() const { return m_ready; }
+
+public slots:
+    void processVideoFrame(const QVideoFrame& frame);
+
+signals:
+    void mapsChanged(std::vector<Map<float>> maps);
+
+private:
+    bool m_ready;
+    bool& m_frameChanging;
+};
+#endif
 
 #endif

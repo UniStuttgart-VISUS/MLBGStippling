@@ -6,6 +6,9 @@
 #include "stippler.h"
 #include <QScopedPointer>
 #include <QWidget>
+#if defined(QT_MULTIMEDIA_LIB)
+#include <QCamera>
+#endif
 
 enum RenderMode {
     RasterStipplesWithBackground = 0,
@@ -38,6 +41,9 @@ signals:
     void importAsDensity(const QStringList& paths);
     void importAsDual(const QString& path);
     void importLayers(Layers layers);
+#if defined(QT_MULTIMEDIA_LIB)
+    void importCamera(QCamera* camera);
+#endif
     void exportImage(const QString& path);
     void exportNaturalNeighborData();
     void loadProject(const QString& path);
