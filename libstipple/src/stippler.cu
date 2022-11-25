@@ -79,6 +79,7 @@ public:
         const std::vector<StipplerLayer>& layers) {
         // TODO: assert if layer size or options do not match.
         m_densityMaps = makeDensityMaps(layers, options);
+        m_lbg.softRewind();
     }
 
     std::vector<std::vector<Stipple>> stipple(StippleAlgorithm stippleAlgorithm, VoronoiAlgorithm voronoiAlgorithm, Stippler::IterationCallback cb) {

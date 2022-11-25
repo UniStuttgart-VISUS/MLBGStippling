@@ -290,13 +290,13 @@ void MainWindow::loadCamera(QCamera* camera) {
 
     // m_toolbox->setmax(RenderMode::PainterHighlightedStipples);
     m_layers[0].image = QImage(videoSink->videoSize() / 2, QImage::Format_ARGB32); // XXX: another hack.
-    m_toolbox->setRenderMode(RenderMode::PainterHighlightedStipples);
-    m_toolbox->setMinIterationDuration(15);
+    m_toolbox->setRenderMode(RenderMode::RasterStipples);
+    m_toolbox->setMinIterationDuration(1);
     m_toolbox->setEditable(false);
     auto docks = findChildren<QDockWidget*>();
     for (auto* dock : docks) {
         dock->hide();
-    } 
+    }
     QCoreApplication::processEvents();
 
     camera->start();
@@ -308,7 +308,7 @@ void MainWindow::loadCameraMaps(std::vector<Map<float>> maps) {
     }
     m_frameChanging = true;
 
-    //qDebug() << "loadCameraMaps";
+    // qDebug() << "loadCameraMaps";
 
     auto stipplerLayers = toStipplerLayers(m_layers);
     for (int i = 0; i < stipplerLayers.size(); ++i) {
@@ -475,7 +475,7 @@ void FrameWorker::processVideoFrame(const QVideoFrame& frame) {
         return;
     }
     m_ready = false;
-    //qDebug() << "processVideoFrame";
+    // qDebug() << "processVideoFrame";
 
     QImage image = frame.toImage().convertToFormat(QImage::Format_Grayscale8);
     image = image.scaled(image.size() / 2);

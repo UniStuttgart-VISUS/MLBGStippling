@@ -789,7 +789,14 @@ QWidget* ToolboxWidget::createButtonGroup() {
         cameraAction->setData(QVariant::fromValue(cameraDevice));
         connect(cameraAction, QOverload<bool>::of(&QAction::triggered), [this, cameraAction]() {
             const auto& cameraDevice = cameraAction->data().value<QCameraDevice>();
-            emit importCamera(new QCamera(cameraDevice));
+            auto* camera = new QCamera(cameraDevice);
+            if (!camera->isAvailable()) {
+                QMessageBox::warning(this, "Camera unavailable",
+                    "The selected camera is unavailable or in use "
+                    "by another application.");
+                return;
+            }
+            emit importCamera(camera);
         });
     }
 #endif

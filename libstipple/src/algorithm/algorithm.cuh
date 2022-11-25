@@ -75,6 +75,8 @@ public:
     LindeBuzoGray(LindeBuzoGray&&);
     LindeBuzoGray& operator=(LindeBuzoGray&&);
 
+    void softRewind();
+
     LindeBuzoGrayResult step(Stipples& stipples, const Cells& cells, const Cells& coupledCells);
 
 private:

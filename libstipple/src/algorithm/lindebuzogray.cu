@@ -17,8 +17,8 @@ __device__ __forceinline__ Point splitJitter(unsigned int hashIndex, float sprea
 }
 
 __device__ __forceinline__ bool shouldCouple(unsigned int hashIndex, float avgStippleDensity) {
-    //return true;
-    //return hash_u2f(hashIndex, 3) < 0.5f;
+    // return true;
+    // return hash_u2f(hashIndex, 3) < 0.5f;
     return hash_u2f(hashIndex, 3) < avgStippleDensity;
 }
 
@@ -231,7 +231,7 @@ __global__ void lindeBuzoGrayStepKernel(
             stippleSize
         };
     }();
-    //XXX: assert(!(ego.shouldSplit && ego.shouldRemove) && "Split and remove must not contradict");
+    // XXX: assert(!(ego.shouldSplit && ego.shouldRemove) && "Split and remove must not contradict");
 
     // Joint decision with merge neighbor.
     struct Joint {
@@ -384,6 +384,12 @@ LindeBuzoGray::~LindeBuzoGray() {
 LindeBuzoGray::LindeBuzoGray(LindeBuzoGray&&) = default;
 
 LindeBuzoGray& LindeBuzoGray::operator=(LindeBuzoGray&&) = default;
+
+void LindeBuzoGray::softRewind() {
+    p->iteration = p->options.maxIterations - 1;
+    p->hashOffset = 0;
+    p->lastTDMSE = 0.0f;
+}
 
 LindeBuzoGrayResult LindeBuzoGray::step(Stipples& stipples, const Cells& cells, const Cells& coupledCells) {
     // Make sure there is enough space for scattering.
