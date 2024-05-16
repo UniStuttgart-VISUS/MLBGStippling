@@ -5,6 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 find_package(Qt6 QUIET COMPONENTS Core Widgets Svg OpenGLWidgets OPTIONAL_COMPONENTS Multimedia)
 if(NOT Qt6_FOUND)
+    message(WARNING "Qt6 not found, trying fallback...")
     find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
     message(STATUS "Using Qt5 fallback ${Qt5Widgets_VERSION_STRING}")
 elseif(TARGET Qt6::Multimedia)
@@ -52,12 +53,9 @@ if(WIN32)
             $<$<CONFIG:RELEASE>:--release>
             $<$<CONFIG:RELWITHDEBINFO>:--release>
             $<$<CONFIG:DEBUG>:--debug>
-            $<$<NOT:$<BOOL:${Qt6_FOUND}>>:--no-angle>
             --no-opengl-sw
             --no-compiler-runtime
             --no-system-d3d-compiler
-            $<$<NOT:$<BOOL:${Qt6_FOUND}>>:--no-webkit2>
-            $<$<NOT:$<VERSION_LESS:${Qt5Core_VERSION},"5.13.0">>:--no-virtualkeyboard>
             --no-quick-import
             --no-translations
             \"$<TARGET_FILE_DIR:${PROJECT_NAME}>/$<TARGET_FILE_NAME:${PROJECT_NAME}>\"

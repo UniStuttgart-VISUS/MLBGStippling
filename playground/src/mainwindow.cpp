@@ -165,7 +165,13 @@ void MainWindow::setIntermediateResultDisplay(int minIterationDuration) {
             for (int layerIndex = 0; layerIndex < m_layers.size(); layerIndex++) {
                 m_layers[layerIndex].stipples = layerStipples[layerIndex];
             }
-            if (!lindeBuzoGrayResult.done || m_frameChanging) {
+            bool frameChanging =
+#if defined(QT_MULTIMEDIA_LIB)
+                m_frameChanging;
+#else
+                false;
+#endif
+            if (!lindeBuzoGrayResult.done || frameChanging) {
                 m_toolbox->setRenderMode(RenderMode::RasterStipples);
             } else {
                 m_toolbox->setRenderMode(RenderMode::RasterStipplesWithBackground);

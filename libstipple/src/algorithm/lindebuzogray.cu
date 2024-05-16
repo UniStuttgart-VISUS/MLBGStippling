@@ -4,6 +4,8 @@
 #include "utils/diagnostics.cuh"
 #include "utils/hash.cuh"
 #include "utils/math.cuh"
+#include <thrust/execution_policy.h>
+#include <thrust/remove.h>
 #include <cuda.h>
 
 __device__ __forceinline__ float errorReduction(unsigned int hashIndex, float reductionChance) {

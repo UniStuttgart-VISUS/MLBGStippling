@@ -4,6 +4,8 @@
 #include "utils/diagnostics.cuh"
 #include <cuda.h>
 #include <thrust/unique.h>
+#include <thrust/sort.h>
+#include <thrust/execution_policy.h>
 
 __global__ void linearSearchKernel(
     KernelCellMaps cellMaps,

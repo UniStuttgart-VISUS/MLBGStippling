@@ -45,7 +45,7 @@ if(UNIX AND NOT APPLE)
         PUBLIC Threads::Threads ${CMAKE_DL_LIBS} rt)
 endif()
 
-option(ENABLE_NVTOOLSEXT "Use NVIDIA Tools Extensions for profiling." ON)
+option(ENABLE_NVTOOLSEXT "Use NVIDIA Tools Extensions for profiling." OFF)
 if(ENABLE_NVTOOLSEXT)
     # Before fiddling around with detection, note that:
     # - NVTX v3 is a header-only library

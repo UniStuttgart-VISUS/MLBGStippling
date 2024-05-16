@@ -6,6 +6,7 @@
 /data
 /unmixer/__pycache__
 
+CMakeSettings.json
 CMakeLists.txt.user
 *.log
 *.bak
