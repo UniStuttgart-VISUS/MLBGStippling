@@ -6,40 +6,46 @@ on:
     tags: [ 'v*.*.*' ]
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-2019
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install CUDA
+        uses: Jimver/cuda-toolkit@v0.2.15
+        with:
+          cuda: '12.4.1'
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3.3.0
+        with:
+          version: '6.7.0'
+      - name: Configure and build with CMake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config Release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifact
+          path: build/playground/Release/
 
-    - name: Install CUDA
-      uses: Jimver/cuda-toolkit@v0.2.15
-      with:
-        cuda: '12.4.1'
-
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v3.3.0
-      with:
-        version: '6.7.0'
-
-    - name: Configure and build with CMake
-      run: |
-        mkdir build
-        cd build
-        cmake ..
-        cmake --build . --config Release
-
-    - name: Create archive
-      uses: actions/upload-artifact@v4
-      with:
-        name: mlbgstippling-${{ github.ref_name }}
-        path: build/playground/Release/
-
-    - name: Release
-      uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: |
-          mlbgstippling-${{ github.ref_name }}
-          LICENSE.txt
+  release:
+    name: Release
+    runs-on: ubuntu-22.04
+    needs: [ build-windows ]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifact
+          path: windows
+      - name: Zip Windows artifact
+        run: zip -9 -r MLBGStippling-Windows.zip windows/ LICENSE.txt
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            MLBGStippling-Windows.zip
