@@ -29,22 +29,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifact
-          path: build/playground/Release/
+          path: |
+            build/playground/Release/
+            !build/playground/Release/*.lib
+            !build/playground/Release/*.exp
+            LICENSE.txt  
 
   release:
-    name: Release
     runs-on: ubuntu-22.04
     needs: [ build-windows ]
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Download Windows artifact
+      - name: Download artifact (Windows)
         uses: actions/download-artifact@v4
         with:
           name: windows-artifact
           path: windows
-      - name: Zip Windows artifact
-        run: zip -9 -r MLBGStippling-Windows.zip windows/ LICENSE.txt
-      - name: GitHub Release
+      - name: Zip artifact (Windows)
+        run: |
+          cd windows/
+          zip -9 -r ../MLBGStippling-Windows.zip ./
+      - name: Push release
         uses: softprops/action-gh-release@v2
         with:
           files: |
