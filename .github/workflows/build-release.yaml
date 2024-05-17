@@ -1,0 +1,58 @@
+
+name: Build and Release
+
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+
+jobs:
+  build-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install CUDA
+        uses: Jimver/cuda-toolkit@v0.2.15
+        with:
+          cuda: '12.4.1'
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3.3.0
+        with:
+          version: '6.7.0'
+      - name: Configure and build with CMake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config Release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifact
+          path: |
+            build/playground/Release/
+            !build/playground/Release/*.lib
+            !build/playground/Release/*.exp
+            LICENSE.txt  
+
+  release:
+    runs-on: ubuntu-22.04
+    needs: [ build-windows ]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifact (Windows)
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifact
+          path: windows
+      - name: Zip artifact (Windows)
+        run: |
+          cd windows/
+          mv build/playground/Release/* ./
+          rm -rf build/playground/Release/
+          zip -r ../MLBGStippling-Windows.zip ./
+      - name: Push release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            MLBGStippling-Windows.zip
