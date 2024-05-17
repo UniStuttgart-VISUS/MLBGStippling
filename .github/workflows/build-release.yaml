@@ -48,7 +48,9 @@ jobs:
       - name: Zip artifact (Windows)
         run: |
           cd windows/
-          zip -9 -r ../MLBGStippling-Windows.zip ./
+          mv build/playground/Release/* ./
+          rm -rf build/playground/Release/
+          zip -r ../MLBGStippling-Windows.zip ./
       - name: Push release
         uses: softprops/action-gh-release@v2
         with:
